@@ -19,8 +19,8 @@ func setCommonOptions(reply *dhcpv4.DHCPv4) {
 	reply.UpdateOption(dhcpv4.OptServerIdentifier(config.Config.ServerIdentifier))     // 54
 }
 
-func getIP(hwAddr []byte) []byte {
-	req, err := http.NewRequest("POST", config.Config.Endpoint, bytes.NewBuffer(hwAddr))
+func getIP(hwAddr string) []byte {
+	req, err := http.NewRequest("POST", config.Config.Endpoint, bytes.NewBufferString(hwAddr))
 	if err != nil {
 		log.Printf("error during http request: %v", err)
 		return nil
@@ -81,11 +81,11 @@ func DORAHandler(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv4) {
 		reply.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeOffer))
 
 		setCommonOptions(reply)
-		ip := getIP(m.ClientHWAddr)
+		ip := getIP(m.ClientHWAddr.String())
 		if ip == nil {
 			return
 		}
-		reply.YourIPAddr = ip
+		reply.YourIPAddr = net.ParseIP(string(ip))
 	case dhcpv4.MessageTypeRequest:
 		ip := dhcpv4.GetIP(dhcpv4.OptionServerIdentifier, m.Options)
 		if ip.Equal(config.Config.ServerIdentifier) {
