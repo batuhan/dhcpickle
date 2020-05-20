@@ -25,6 +25,8 @@ func getIP(hwAddr []byte) []byte {
 		log.Printf("error during http request: %v", err)
 		return nil
 	}
+	req.Header.Add("Content-Type", "text/plain")
+
 	authHeader := config.Config.AuthHeader
 	authToken := config.Config.AuthToken
 	if authHeader != "" && authToken != "" {
