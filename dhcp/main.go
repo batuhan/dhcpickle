@@ -1,6 +1,7 @@
 package dhcp
 
 import (
+	"bytes"
 	"dhcpickle/config"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"io/ioutil"
@@ -18,8 +19,8 @@ func setCommonOptions(reply *dhcpv4.DHCPv4) {
 	reply.UpdateOption(dhcpv4.OptServerIdentifier(config.Config.ServerIdentifier))     // 54
 }
 
-func getIP() []byte {
-	req, err := http.NewRequest("GET", config.Config.Endpoint, nil)
+func getIP(hwAddr []byte) []byte {
+	req, err := http.NewRequest("POST", config.Config.Endpoint, bytes.NewBuffer(hwAddr))
 	if err != nil {
 		log.Printf("error during http request: %v", err)
 		return nil
@@ -72,7 +73,7 @@ func DORAHandler(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv4) {
 		reply.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeOffer))
 
 		setCommonOptions(reply)
-		ip := getIP()
+		ip := getIP(m.ClientHWAddr)
 		if ip == nil {
 			return
 		}
