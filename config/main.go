@@ -28,7 +28,10 @@ func getOutboundIP() net.IP {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer conn.Close()
+	err = conn.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 
