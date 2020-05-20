@@ -36,18 +36,24 @@ func getIP(hwAddr []byte) []byte {
 		return nil
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("error while reading body to string: %v", err)
+	statusCode := resp.StatusCode
+	if statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("error while reading body to string: %v", err)
+			return nil
+		}
+
+		err = resp.Body.Close()
+		if err != nil {
+			log.Printf("error while closing body after read: %v", err)
+		}
+
+		return body
+	} else {
+		log.Printf("server returned status code: %v", statusCode)
 		return nil
 	}
-
-	err = resp.Body.Close()
-	if err != nil {
-		log.Printf("error while closing body after read: %v", err)
-	}
-
-	return body
 }
 
 func DORAHandler(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv4) {
