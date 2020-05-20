@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -14,9 +15,13 @@ type config struct {
 	DNS                []net.IP
 	IPAddressLeaseTime time.Duration
 	ServerIdentifier   net.IP
+	Endpoint           string
+	AuthHeader         string
+	AuthToken          string
 }
 
 var Config = config{}
+var Client = http.Client{}
 
 func getOutboundIP() net.IP {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
@@ -90,6 +95,14 @@ func InitConfig() {
 	} else {
 		Config.ServerIdentifier = net.ParseIP(serverIdentifier)
 	}
+
+	Config.Endpoint = os.Getenv(envPrefix + "ENDPOINT")
+	if Config.Endpoint == "" {
+		log.Fatalf("%v_ENDPOINT is required", envPrefix)
+	}
+
+	Config.AuthHeader = os.Getenv(envPrefix + "AUTH_HEADER")
+	Config.AuthToken = os.Getenv(envPrefix + "AUTH_TOKEN")
 
 	log.Println("generated config", Config)
 }

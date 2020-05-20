@@ -3,8 +3,10 @@ package dhcp
 import (
 	"dhcpickle/config"
 	"github.com/insomniacslk/dhcp/dhcpv4"
+	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
 )
 
 func setCommonOptions(reply *dhcpv4.DHCPv4) {
@@ -14,6 +16,37 @@ func setCommonOptions(reply *dhcpv4.DHCPv4) {
 	reply.UpdateOption(dhcpv4.OptDNS(config.Config.DNS...))                            // 6
 	reply.UpdateOption(dhcpv4.OptIPAddressLeaseTime(config.Config.IPAddressLeaseTime)) // 51
 	reply.UpdateOption(dhcpv4.OptServerIdentifier(config.Config.ServerIdentifier))     // 54
+}
+
+func getIP() []byte {
+	req, err := http.NewRequest("GET", config.Config.Endpoint, nil)
+	if err != nil {
+		log.Printf("error during http request: %v", err)
+		return nil
+	}
+	authHeader := config.Config.AuthHeader
+	authToken := config.Config.AuthToken
+	if authHeader != "" && authToken != "" {
+		req.Header.Add(authHeader, authToken)
+	}
+	resp, err := config.Client.Do(req)
+	if err != nil {
+		log.Printf("error during http response: %v", err)
+		return nil
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("error while reading body to string: %v", err)
+		return nil
+	}
+
+	err = resp.Body.Close()
+	if err != nil {
+		log.Printf("error while closing body after read: %v", err)
+	}
+
+	return body
 }
 
 func DORAHandler(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv4) {
@@ -39,7 +72,11 @@ func DORAHandler(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv4) {
 		reply.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeOffer))
 
 		setCommonOptions(reply)
-		reply.YourIPAddr = net.IP{185, 226, 95, 104}
+		ip := getIP()
+		if ip == nil {
+			return
+		}
+		reply.YourIPAddr = ip
 	case dhcpv4.MessageTypeRequest:
 		ip := dhcpv4.GetIP(dhcpv4.OptionServerIdentifier, m.Options)
 		if ip.Equal(config.Config.ServerIdentifier) {
