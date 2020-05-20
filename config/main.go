@@ -101,7 +101,7 @@ func InitConfig() {
 
 	Config.Endpoint = os.Getenv(envPrefix + "ENDPOINT")
 	if Config.Endpoint == "" {
-		log.Fatalf("%v_ENDPOINT is required", envPrefix)
+		log.Fatalf("%vENDPOINT is required", envPrefix)
 	}
 
 	Config.AuthHeader = os.Getenv(envPrefix + "AUTH_HEADER")
