@@ -45,15 +45,8 @@ func copyAndAppend(slice []byte, elems ...byte) net.IP {
 
 func InitConfig() {
 	outboundIP := getOutboundIP()
+	prefix := outboundIP[:3]
 	envPrefix := "DHCP_"
-
-	var prefix []byte
-	prefixString := os.Getenv(envPrefix + "PREFIX")
-	if prefixString == "" {
-		prefix = outboundIP[:3]
-	} else {
-		prefix = []byte(prefixString)
-	}
 
 	subnetMask := os.Getenv(envPrefix + "SUBNET_MASK")
 	if subnetMask == "" {
